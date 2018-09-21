@@ -69,12 +69,22 @@ public class ExtensionLoader<T> {
 
     private static final Pattern NAME_SEPARATOR = Pattern.compile("\\s*[,]+\\s*");
 
+    /**
+     * 扩展加载类集合，key是扩展类接口
+     */
     private static final ConcurrentMap<Class<?>, ExtensionLoader<?>> EXTENSION_LOADERS = new ConcurrentHashMap<Class<?>, ExtensionLoader<?>>();
 
+    /**
+     * 扩展类实现集合，key是扩展类，value扩展类对象
+     * 例如，key 为 Class<AccessLogFilter>， value 为 AccessLogFilter 对象
+     */
     private static final ConcurrentMap<Class<?>, Object> EXTENSION_INSTANCES = new ConcurrentHashMap<Class<?>, Object>();
 
     // ==============================
 
+    /**
+     * 扩展类接口
+     */
     private final Class<?> type;
 
     private final ExtensionFactory objectFactory;
@@ -94,6 +104,12 @@ public class ExtensionLoader<T> {
 
     private Map<String, IllegalStateException> exceptions = new ConcurrentHashMap<String, IllegalStateException>();
 
+    /**
+     * 对象工厂
+     * 用于调用 {@link #injectExtension(Object)} 方法，向拓展对象注入依赖属性。
+     * 例如，StubProxyFactoryWrapper 中有 `Protocol protocol` 属性。
+     * @param type
+     */
     private ExtensionLoader(Class<?> type) {
         this.type = type;
         objectFactory = (type == ExtensionFactory.class ? null : ExtensionLoader.getExtensionLoader(ExtensionFactory.class).getAdaptiveExtension());
@@ -104,6 +120,9 @@ public class ExtensionLoader<T> {
     }
 
     @SuppressWarnings("unchecked")
+    /**
+     * 根据扩展点的接口，获得扩展加载器
+     */
     public static <T> ExtensionLoader<T> getExtensionLoader(Class<T> type) {
         if (type == null)
             throw new IllegalArgumentException("Extension type == null");
@@ -115,6 +134,7 @@ public class ExtensionLoader<T> {
                     ") is not extension, because WITHOUT @" + SPI.class.getSimpleName() + " Annotation!");
         }
 
+        // 获得接口对应的扩展点加载器
         ExtensionLoader<T> loader = (ExtensionLoader<T>) EXTENSION_LOADERS.get(type);
         if (loader == null) {
             EXTENSION_LOADERS.putIfAbsent(type, new ExtensionLoader<T>(type));
@@ -559,6 +579,11 @@ public class ExtensionLoader<T> {
         return clazz;
     }
 
+    /**
+     * 获得扩展点实现类数组
+     *
+     * @return 扩展点实现类数组
+     */
     private Map<String, Class<?>> getExtensionClasses() {
         Map<String, Class<?>> classes = cachedClasses.get();
         if (classes == null) {
@@ -574,7 +599,14 @@ public class ExtensionLoader<T> {
     }
 
     // synchronized in getExtensionClasses
+
+    /**
+     * 加载扩展实现类数组
+     * 不用加synchronized，因为唯一调用本方法的{@link #getExtensionClasses()} 已经声明
+     * @return 扩展实现类数组
+     */
     private Map<String, Class<?>> loadExtensionClasses() {
+        // 获得默认扩展类实现类名
         final SPI defaultAnnotation = type.getAnnotation(SPI.class);
         if (defaultAnnotation != null) {
             String value = defaultAnnotation.value();

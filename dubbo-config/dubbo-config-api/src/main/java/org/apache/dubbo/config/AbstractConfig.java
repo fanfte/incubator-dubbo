@@ -181,6 +181,7 @@ public abstract class AbstractConfig implements Serializable {
         for (Method method : methods) {
             try {
                 String name = method.getName();
+                // 方法为public 返回值为基本类型  的get方法
                 if ((name.startsWith("get") || name.startsWith("is"))
                         && !"getClass".equals(name)
                         && Modifier.isPublic(method.getModifiers())
